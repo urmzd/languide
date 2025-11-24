@@ -1,0 +1,17 @@
+# Virtual environments and caches
+.venv/
+.uv-cache/
+__pycache__/
+
+# Editor/OS clutter
+.DS_Store
+
+# PDF and intermediate build artifacts
+outputs/**/*.pdf
+outputs/**/*.md
+languages/*/outputs/**/*.pdf
+languages/*/outputs/**/*.md
+
+# Logs and temp
+*.log
+*.tmp

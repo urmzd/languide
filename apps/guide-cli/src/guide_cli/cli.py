@@ -1,0 +1,188 @@
+from __future__ import annotations
+
+import shutil
+import subprocess
+from pathlib import Path
+from typing import Iterable
+
+import typer
+
+app = typer.Typer(help="Generate standardized tourist guide PDFs from a language folder.")
+
+
+def _section_sort_key(path: Path) -> tuple[int, str]:
+    """Sort numerically when files start with 00-, 01-, etc., then by name."""
+    stem = path.stem
+    prefix = stem.split("-", 1)[0]
+    try:
+        return int(prefix), stem
+    except ValueError:
+        return 10_000, stem
+
+
+def _collect_sections(section_dir: Path) -> list[Path]:
+    if not section_dir.is_dir():
+        raise typer.BadParameter(f"Expected a sections directory at {section_dir}")
+
+    section_files = sorted(section_dir.glob("*.md"), key=_section_sort_key)
+    if not section_files:
+        raise typer.BadParameter(f"No markdown files found in {section_dir}")
+
+    return section_files
+
+
+def _combine_sections(section_files: Iterable[Path], combined_path: Path) -> Path:
+    combined_path.parent.mkdir(parents=True, exist_ok=True)
+    parts = [path.read_text(encoding="utf-8") for path in section_files]
+    combined_path.write_text("\n\n".join(parts), encoding="utf-8")
+    return combined_path
+
+
+def _render_pdf(
+    md_path: Path, pdf_path: Path, title: str, pdf_engine: str, cjk_fonts: list[str] | None
+) -> Path:
+    if shutil.which("pandoc") is None:
+        raise RuntimeError(
+            "pandoc is required to build PDFs. Install it (e.g. `brew install pandoc`) "
+            "and ensure LaTeX tooling like TeX Live is available."
+        )
+
+    candidates: list[str | None] = cjk_fonts or [
+        None,
+        "Hiragino Sans W3",  # macOS default Japanese font
+        "Hiragino Mincho ProN",
+        "Noto Sans CJK JP",
+        "Noto Serif CJK JP",
+        "Source Han Sans",
+        "IPAMincho",
+        "IPAGothic",
+    ]
+
+    errors: list[str] = []
+    for font in candidates:
+        cmd = [
+            "pandoc",
+            str(md_path),
+            "-o",
+            str(pdf_path),
+            "--from=markdown",
+            "--pdf-engine",
+            pdf_engine,
+            "--toc",
+            "--toc-depth=3",
+            "--number-sections",
+            "-V",
+            f"title={title}",
+            "-V",
+            "geometry:margin=1in",
+            "-V",
+            "colorlinks=true",
+        ]
+        if font:
+            cmd.extend(["-V", f"mainfont={font}", "-V", f"CJKmainfont={font}"])
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            return pdf_path
+
+        errors.append(
+            f"font={font or 'default'} code={result.returncode} "
+            f"stdout={result.stdout.strip() or 'n/a'} stderr={result.stderr.strip() or 'n/a'}"
+        )
+
+    raise RuntimeError(
+        "pandoc failed while creating the PDF after trying fonts: "
+        f"{', '.join(str(f or 'default') for f in candidates)}. "
+        "Consider installing a CJK font (e.g., Noto Sans CJK JP) or set --cjk-font. "
+        f"Details:\n" + "\n".join(errors)
+    )
+
+
+def _resolve_folder(slug_or_path: Path, languages_dir: Path) -> Path:
+    """Resolve a language folder, preferring an explicit path, otherwise languages/<slug>."""
+    if slug_or_path.is_dir():
+        return slug_or_path.resolve()
+    candidate = (languages_dir / slug_or_path).resolve()
+    if candidate.is_dir():
+        return candidate
+    raise typer.BadParameter(f"Could not find language folder at {slug_or_path} or {candidate}")
+
+
+@app.command()
+def guide(
+    language: Path = typer.Argument(
+        ...,
+        help="Language slug or path (defaults to languages/<slug> if not a directory).",
+        show_default=False,
+    ),
+    languages_dir: Path = typer.Option(
+        Path("languages"), "--languages-dir", help="Directory containing language guides."
+    ),
+    output_dir: Path = typer.Option(Path("outputs"), "--output-dir", "-o", help="Final outputs directory."),
+    pdf_name: str | None = typer.Option(None, help="Custom PDF name (without extension)."),
+    keep_combined_markdown: bool = typer.Option(
+        False, "--keep-md", help="Keep the combined markdown used to render the PDF."
+    ),
+    pdf_engine: str = typer.Option(
+        "xelatex", "--pdf-engine", help="Pandoc PDF engine (use xelatex/lualatex for Unicode)."
+    ),
+    cjk_font: list[str] = typer.Option(
+        None,
+        "--cjk-font",
+        help="Font(s) to try for CJK text (can be passed multiple times). Defaults include Hiragino/Noto/IPA.",
+    ),
+) -> None:
+    """
+    Build a PDF for a language guide by combining all markdown sections,
+    rendering them to a PDF in <language>/outputs, then moving the PDF
+    into the root-level outputs directory.
+    """
+    languages_dir = languages_dir.resolve()
+    folder = _resolve_folder(language, languages_dir)
+    language = folder.name
+    sections_dir = folder / "sections"
+    language_output_dir = folder / "outputs"
+
+    try:
+        section_files = _collect_sections(sections_dir)
+    except typer.BadParameter as exc:
+        typer.echo(f"[error] {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    pdf_basename = f"{language}-guide" if pdf_name is None else pdf_name
+    combined_md = language_output_dir / f"{pdf_basename}.md"
+    pdf_path = language_output_dir / f"{pdf_basename}.pdf"
+
+    typer.echo(f"Combining {len(section_files)} sections from {sections_dir}...")
+    _combine_sections(section_files, combined_md)
+
+    try:
+        typer.echo("Rendering PDF with pandoc...")
+        _render_pdf(
+            combined_md,
+            pdf_path,
+            title=f"{language.title()} Tourist Guide",
+            pdf_engine=pdf_engine,
+            cjk_fonts=cjk_font or None,
+        )
+    except RuntimeError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1)
+
+    output_dir = output_dir.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    final_pdf = output_dir / pdf_path.name
+    if final_pdf.exists():
+        final_pdf.unlink()
+    shutil.move(str(pdf_path), final_pdf)
+
+    if keep_combined_markdown:
+        typer.echo(f"Combined markdown retained at {combined_md}")
+    else:
+        combined_md.unlink(missing_ok=True)
+
+    typer.echo(f"Guide ready: {final_pdf}")
+
+
+def main() -> None:
+    app()
