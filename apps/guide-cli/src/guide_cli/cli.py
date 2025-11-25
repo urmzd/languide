@@ -128,15 +128,26 @@ def _section_sort_key(path: Path) -> tuple[int, str]:
         return 10_000, stem
 
 
-def _collect_sections(section_dir: Path) -> list[Path]:
-    if not section_dir.is_dir():
-        raise typer.BadParameter(f"Expected a sections directory at {section_dir}")
+def _collect_sections(sections_dir: Path | None, chapters_dir: Path | None = None) -> list[Path]:
+    """
+    Collect markdown files from chapters/ (preferred) and sections/ (fallback).
 
-    section_files = sorted(section_dir.glob("*.md"), key=_section_sort_key)
-    if not section_files:
-        raise typer.BadParameter(f"No markdown files found in {section_dir}")
+    Files are sorted by their numeric prefix (00-, 01-, etc.) and combined in order.
+    """
+    files: list[Path] = []
 
-    return section_files
+    if chapters_dir and chapters_dir.is_dir():
+        files.extend(sorted(chapters_dir.glob("*.md"), key=_section_sort_key))
+
+    if sections_dir and sections_dir.is_dir():
+        files.extend(sorted(sections_dir.glob("*.md"), key=_section_sort_key))
+
+    if not files:
+        raise typer.BadParameter(
+            f"No markdown files found. Looked in chapters={chapters_dir} and sections={sections_dir}"
+        )
+
+    return files
 
 
 def _combine_sections(section_files: Iterable[Path], combined_path: Path) -> Path:
@@ -264,10 +275,11 @@ def guide(
     folder = _resolve_folder(language, languages_dir)
     language = folder.name
     sections_dir = folder / "sections"
+    chapters_dir = folder / "chapters"
     language_output_dir = folder / "outputs"
 
     try:
-        section_files = _collect_sections(sections_dir)
+        section_files = _collect_sections(sections_dir, chapters_dir)
     except typer.BadParameter as exc:
         typer.echo(f"[error] {exc}", err=True)
         raise typer.Exit(code=1)
@@ -276,7 +288,11 @@ def guide(
     combined_md = language_output_dir / f"{pdf_basename}.md"
     pdf_path = language_output_dir / f"{pdf_basename}.pdf"
 
-    typer.echo(f"Combining {len(section_files)} sections from {sections_dir}...")
+    using_chapters = chapters_dir.exists() and any(chapters_dir in f.parents for f in section_files)
+    if using_chapters:
+        typer.echo(f"Combining {len(section_files)} chapter files from {chapters_dir}...")
+    else:
+        typer.echo(f"Combining {len(section_files)} section files from {sections_dir}...")
     _combine_sections(section_files, combined_md)
 
     try:

@@ -724,6 +724,58 @@ Answer: Always yes. Don't worry about fare, IC card auto-calculates.
 
 ---
 
+## Mode-Specific Quick Phrases
+
+### Train / Subway
+- この電車は[駅]に行きますか？  
+  *Kono densha wa [eki] ni ikimasu ka?* — Does this train go to [station]?
+- [路線名]はどこですか？  
+  *[rosen-mei] wa doko desu ka?* — Where is the [line name]?
+- [番号]番ホームですか？  
+  *[bangō]-ban hōmu desu ka?* — Is it platform [#]?
+- 乗り換えはどこですか？  
+  *Norikae wa doko desu ka?* — Where do I transfer?
+
+### Bus (Kyoto-friendly)
+- このバスは[場所]に行きますか？  
+  *Kono basu wa [basho] ni ikimasu ka?* — Does this bus go to [place]?
+- 前乗り・後乗りですか？  
+  *Mae-nori? Ato-nori desu ka?* — Board in front or rear?
+- 一日乗車券はどこで買えますか？  
+  *Ichinichi jōshaken wa doko de kaemasu ka?* — Where can I buy a day pass?
+- 降ります（ピンポン押す前に言う）  
+  *Orimasu* — I’m getting off (say before pressing the stop button).
+
+### Taxi
+- [場所]までお願いします。  
+  *[Basho] made onegaishimasu.* — To [place], please.
+- ここで止めてください。  
+  *Koko de tomete kudasai.* — Please stop here.
+- 領収書をください。  
+  *Ryōshūsho o kudasai.* — Receipt, please.
+- クレジットカードは使えますか？  
+  *Kurejitto kādo wa tsukaemasu ka?* — Can I use a credit card?
+- 一番早い道でお願いします。  
+  *Ichiban hayai michi de onegaishimasu.* — Fastest route, please.
+
+### Walking / Directions (see Chapter 04 for full list)
+- まっすぐ行って右です。  
+  *Massugu itte migi desu.* — Go straight, then right.
+- 信号を左に曲がってください。  
+  *Shingō o hidari ni magatte kudasai.* — Turn left at the light.
+- 近いですか？歩けますか？  
+  *Chikai desu ka? Arukemasu ka?* — Is it close? Can I walk?
+
+### Tickets & IC Cards (recap)
+- ICカードをチャージしたいです。  
+  *IC kādo o chāji shitai desu.* — I want to add money to my IC card.
+- 切符はどう買えばいいですか？  
+  *Kippu wa dō kaeba ii desu ka?* — How do I buy a ticket?
+- 定期券はどこで作れますか？  
+  *Teikiken wa doko de tsukuremasu ka?* — Where can I make a commuter pass?
+
+---
+
 **This guide provides a comprehensive, tourist-friendly reference with:**
 - Scannable tables for quick lookup
 - Politeness tiers (casual/polite/very polite) with clear recommendations
