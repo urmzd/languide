@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import json
 import platform
 import shutil
 import subprocess
-import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable
 
 import typer
+
+from .discover import discover_languages, get_language_slugs, languages_to_json
 
 app = typer.Typer(help="Generate standardized tourist guide PDFs from a language folder.")
 
@@ -321,6 +324,203 @@ def guide(
         combined_md.unlink(missing_ok=True)
 
     typer.echo(f"Guide ready: {final_pdf}")
+    return final_pdf
+
+
+@app.command()
+def discover(
+    languages_dir: Path = typer.Option(
+        Path("languages"), "--languages-dir", help="Directory containing language guides."
+    ),
+    pattern: str | None = typer.Option(
+        None, "--pattern", "-p", help="Filter languages by pattern (case-insensitive substring match)."
+    ),
+    json_output: bool = typer.Option(
+        False, "--json", "-j", help="Output in JSON format for CI/CD integration."
+    ),
+    compact: bool = typer.Option(
+        False, "--compact", "-c", help="Output compact JSON (for GitHub Actions)."
+    ),
+    slugs_only: bool = typer.Option(
+        False, "--slugs-only", "-s", help="Output only language slugs, one per line."
+    ),
+) -> None:
+    """
+    Discover all available languages in the languages directory.
+
+    Languages are directories containing a 'chapters/' subdirectory with markdown files.
+    """
+    languages_dir = languages_dir.resolve()
+    languages = discover_languages(languages_dir, pattern)
+
+    if not languages:
+        typer.echo("No languages found.", err=True)
+        raise typer.Exit(code=1)
+
+    if slugs_only:
+        for slug in get_language_slugs(languages):
+            typer.echo(slug)
+    elif json_output or compact:
+        typer.echo(languages_to_json(languages, compact=compact))
+    else:
+        typer.echo(f"Found {len(languages)} language(s):\n")
+        for lang in languages:
+            typer.echo(f"  • {lang.slug}")
+            typer.echo(f"    Path: {lang.path}")
+            typer.echo(f"    Chapters: {lang.chapter_count}")
+            typer.echo(f"    Has spec: {'Yes' if lang.has_spec else 'No'}")
+            typer.echo()
+
+
+@app.command("build-all")
+def build_all(
+    languages_dir: Path = typer.Option(
+        Path("languages"), "--languages-dir", help="Directory containing language guides."
+    ),
+    output_dir: Path = typer.Option(
+        Path("outputs"), "--output-dir", "-o", help="Final outputs directory."
+    ),
+    pattern: str | None = typer.Option(
+        None, "--pattern", "-p", help="Filter languages by pattern."
+    ),
+    skip_font_check: bool = typer.Option(
+        False, "--skip-font-check", help="Skip automatic CJK font checking."
+    ),
+    pdf_engine: str = typer.Option(
+        "xelatex", "--pdf-engine", help="Pandoc PDF engine."
+    ),
+    manifest_file: Path | None = typer.Option(
+        None, "--manifest", "-m", help="Path to write build manifest JSON."
+    ),
+    continue_on_error: bool = typer.Option(
+        False, "--continue-on-error", help="Continue building other languages if one fails."
+    ),
+) -> None:
+    """
+    Build PDF guides for all discovered languages.
+
+    Generates a manifest file tracking build status for each language.
+    """
+    languages_dir = languages_dir.resolve()
+    output_dir = output_dir.resolve()
+    languages = discover_languages(languages_dir, pattern)
+
+    if not languages:
+        typer.echo("No languages found to build.", err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(f"Building {len(languages)} language(s)...\n")
+
+    manifest = {
+        "build_time": datetime.now(timezone.utc).isoformat(),
+        "languages_dir": str(languages_dir),
+        "output_dir": str(output_dir),
+        "builds": [],
+    }
+
+    success_count = 0
+    failure_count = 0
+
+    for lang in languages:
+        typer.echo(f"[{lang.slug}] Building...")
+        build_entry = {
+            "slug": lang.slug,
+            "chapters": lang.chapter_count,
+            "status": "pending",
+            "output_file": None,
+            "error": None,
+        }
+
+        try:
+            # Build the guide using the existing guide command logic
+            pdf_path = _build_single_language(
+                language_slug=lang.slug,
+                languages_dir=languages_dir,
+                output_dir=output_dir,
+                skip_font_check=skip_font_check,
+                pdf_engine=pdf_engine,
+            )
+            build_entry["status"] = "success"
+            build_entry["output_file"] = str(pdf_path)
+            success_count += 1
+            typer.echo(f"[{lang.slug}] ✓ Built: {pdf_path}")
+        except Exception as e:
+            build_entry["status"] = "failed"
+            build_entry["error"] = str(e)
+            failure_count += 1
+            typer.echo(f"[{lang.slug}] ✗ Failed: {e}", err=True)
+            if not continue_on_error:
+                manifest["builds"].append(build_entry)
+                _write_manifest(manifest, manifest_file, output_dir)
+                raise typer.Exit(code=1)
+
+        manifest["builds"].append(build_entry)
+
+    # Write manifest
+    _write_manifest(manifest, manifest_file, output_dir)
+
+    # Summary
+    typer.echo(f"\nBuild complete: {success_count} succeeded, {failure_count} failed")
+
+    if failure_count > 0:
+        raise typer.Exit(code=1)
+
+
+def _build_single_language(
+    language_slug: str,
+    languages_dir: Path,
+    output_dir: Path,
+    skip_font_check: bool,
+    pdf_engine: str,
+) -> Path:
+    """Build a single language guide and return the output path."""
+    folder = languages_dir / language_slug
+    if not folder.is_dir():
+        raise ValueError(f"Language folder not found: {folder}")
+
+    sections_dir = folder / "sections"
+    chapters_dir = folder / "chapters"
+    language_output_dir = folder / "outputs"
+
+    # Check for CJK fonts if needed
+    if not skip_font_check and language_slug in ["japanese", "chinese", "korean"]:
+        _ensure_cjk_fonts(auto_install=False)
+
+    section_files = _collect_sections(sections_dir, chapters_dir)
+
+    pdf_basename = f"{language_slug}-guide"
+    combined_md = language_output_dir / f"{pdf_basename}.md"
+    pdf_path = language_output_dir / f"{pdf_basename}.pdf"
+
+    _combine_sections(section_files, combined_md)
+
+    _render_pdf(
+        combined_md,
+        pdf_path,
+        title=f"{language_slug.title()} Tourist Guide",
+        pdf_engine=pdf_engine,
+        cjk_fonts=None,
+    )
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    final_pdf = output_dir / pdf_path.name
+    if final_pdf.exists():
+        final_pdf.unlink()
+    shutil.move(str(pdf_path), final_pdf)
+
+    # Clean up combined markdown
+    combined_md.unlink(missing_ok=True)
+
+    return final_pdf
+
+
+def _write_manifest(manifest: dict, manifest_file: Path | None, output_dir: Path) -> None:
+    """Write build manifest to file."""
+    if manifest_file is None:
+        manifest_file = output_dir / "build-manifest.json"
+
+    manifest_file.parent.mkdir(parents=True, exist_ok=True)
+    manifest_file.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
 def main() -> None:
