@@ -202,6 +202,17 @@ LATIN_SANS_FONTS = [
 ]
 
 
+def _parse_font_families(fc_list_output: str) -> set[str]:
+    """Parse font family names from fc-list output."""
+    families: set[str] = set()
+    for line in fc_list_output.split("\n"):
+        for font in line.split(","):
+            font_name = font.strip()
+            if font_name:
+                families.add(font_name)
+    return families
+
+
 def _find_available_font(candidates: list[str]) -> str | None:
     """Find the first available font from a list of candidates."""
     if not shutil.which("fc-list"):
@@ -217,15 +228,13 @@ def _find_available_font(candidates: list[str]) -> str | None:
         if result.returncode != 0:
             return None
 
-        available_fonts = set(
-            font.strip() for line in result.stdout.split("\n") for font in line.split(",")
-        )
+        available_fonts = _parse_font_families(result.stdout)
 
         for candidate in candidates:
             # Check for exact match (case-insensitive)
             for available in available_fonts:
-                if candidate.lower() == available.strip().lower():
-                    return available.strip()
+                if candidate.lower() == available.lower():
+                    return available
 
         return None
     except (subprocess.TimeoutExpired, OSError):

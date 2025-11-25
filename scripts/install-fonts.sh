@@ -17,7 +17,12 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   fi
   
   # Tap the fonts cask if not already tapped
-  brew tap homebrew/cask-fonts 2>/dev/null || true
+  if ! brew tap | grep -q "homebrew/cask-fonts"; then
+    echo "📦 Adding Homebrew fonts tap..."
+    if ! brew tap homebrew/cask-fonts; then
+      echo "⚠️  Failed to add fonts tap. Some fonts may not be available."
+    fi
+  fi
   
   echo "📦 Installing CJK fonts (Japanese/Chinese/Korean)..."
   brew list --cask font-noto-sans-cjk 2>/dev/null || brew install --cask font-noto-sans-cjk

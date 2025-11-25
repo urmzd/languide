@@ -103,12 +103,14 @@ $endif$
 \usepackage{tcolorbox}
 \tcbuselibrary{most,skins,breakable}
 \usepackage{enumitem}
-\usepackage{hyperref}
 \usepackage{soul}
 \usepackage{setspace}
 \usepackage{parskip}
 \usepackage{lastpage}
 \usepackage{microtype}
+
+% hyperref should be loaded last to avoid conflicts
+\usepackage{hyperref}
 
 % Fix for older templates
 \newlength{\cslhangindent}
