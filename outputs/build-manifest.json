@@ -1,0 +1,13 @@
+{
+  "build_time": "2025-11-25T06:49:11.336904+00:00",
+  "commit": "7a08332fdd06932232af11a19af1236f1decfed8",
+  "ref": "refs/heads/main",
+  "builds": [
+    {
+      "slug": "japanese",
+      "file": "outputs/japanese-guide.pdf",
+      "size_bytes": 580519,
+      "status": "success"
+    }
+  ]
+}
