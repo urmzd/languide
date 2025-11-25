@@ -1,17 +1,8 @@
-# Virtual environments and caches
-.venv/
-.uv-cache/
-__pycache__/
+# Updated .gitignore
 
-# Editor/OS clutter
-.DS_Store
+# Ignore outputs directory
+# languages/*/outputs/**/*.pdf
+# outputs/**/*.pdf
 
-# PDF and intermediate build artifacts
-outputs/**/*.pdf
-outputs/**/*.md
-languages/*/outputs/**/*.pdf
-languages/*/outputs/**/*.md
-
-# Logs and temp
-*.log
-*.tmp
+# Retain PDF files
+!*.pdf
