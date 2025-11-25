@@ -1,13 +1,121 @@
 from __future__ import annotations
 
+import platform
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 from typing import Iterable
 
 import typer
 
 app = typer.Typer(help="Generate standardized tourist guide PDFs from a language folder.")
+
+
+def _check_cjk_fonts_available() -> bool:
+    """Check if any CJK fonts are available on the system."""
+    # Try to list fonts using fc-list (Linux/macOS) or system_profiler (macOS)
+    if platform.system() == "Darwin":
+        # macOS: Check for common Japanese fonts
+        result = subprocess.run(
+            ["system_profiler", "SPFontsDataType"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        fonts_text = result.stdout.lower()
+        return any(
+            font_name in fonts_text
+            for font_name in ["hiragino", "noto sans cjk", "noto serif cjk", "source han", "ipa"]
+        )
+    elif shutil.which("fc-list"):
+        # Linux: Use fontconfig
+        result = subprocess.run(["fc-list", ":lang=ja"], capture_output=True, text=True, timeout=10)
+        return bool(result.stdout.strip())
+    return False  # Unknown system, assume fonts might not be available
+
+
+def _install_cjk_fonts_macos() -> bool:
+    """Attempt to install CJK fonts on macOS using Homebrew. Returns True if successful."""
+    if shutil.which("brew") is None:
+        typer.echo("⚠️  Homebrew not found. Please install Homebrew first:", err=True)
+        typer.echo("   Visit: https://brew.sh", err=True)
+        return False
+
+    typer.echo("📦 Installing Noto CJK fonts via Homebrew...")
+
+    # Install font-noto-sans-cjk
+    result1 = subprocess.run(
+        ["brew", "install", "--cask", "font-noto-sans-cjk"],
+        capture_output=True,
+        text=True,
+    )
+
+    # Install font-noto-serif-cjk
+    result2 = subprocess.run(
+        ["brew", "install", "--cask", "font-noto-serif-cjk"],
+        capture_output=True,
+        text=True,
+    )
+
+    if result1.returncode == 0 or result2.returncode == 0:
+        typer.echo("✅ CJK fonts installed successfully!")
+        return True
+    else:
+        typer.echo("⚠️  Font installation failed. Please install manually:", err=True)
+        typer.echo("   brew install --cask font-noto-sans-cjk font-noto-serif-cjk", err=True)
+        return False
+
+
+def _ensure_cjk_fonts(auto_install: bool = True) -> None:
+    """Ensure CJK fonts are available, installing them if necessary and permitted."""
+    typer.echo("🔍 Checking for CJK fonts...")
+
+    if _check_cjk_fonts_available():
+        typer.echo("✅ CJK fonts detected")
+        return
+
+    typer.echo("⚠️  No CJK fonts detected on your system")
+
+    if not auto_install:
+        _print_manual_font_instructions()
+        raise typer.Exit(code=1)
+
+    # Auto-install on macOS
+    if platform.system() == "Darwin":
+        if typer.confirm("Would you like to install CJK fonts automatically via Homebrew?", default=True):
+            if _install_cjk_fonts_macos():
+                return
+        else:
+            _print_manual_font_instructions()
+            raise typer.Exit(code=1)
+    else:
+        _print_manual_font_instructions()
+        raise typer.Exit(code=1)
+
+
+def _print_manual_font_instructions() -> None:
+    """Print instructions for manually installing CJK fonts."""
+    system = platform.system()
+    typer.echo("\n📖 Manual Installation Instructions:", err=True)
+
+    if system == "Darwin":
+        typer.echo("   macOS:", err=True)
+        typer.echo("   brew install --cask font-noto-sans-cjk font-noto-serif-cjk", err=True)
+    elif system == "Linux":
+        typer.echo("   Linux (Debian/Ubuntu):", err=True)
+        typer.echo("   sudo apt-get install fonts-noto-cjk", err=True)
+        typer.echo("\n   Linux (Fedora/RHEL):", err=True)
+        typer.echo("   sudo dnf install google-noto-sans-cjk-fonts", err=True)
+    elif system == "Windows":
+        typer.echo("   Windows:", err=True)
+        typer.echo("   Download from: https://www.google.com/get/noto/#sans-jpan", err=True)
+        typer.echo("   Install the .ttf files by double-clicking them", err=True)
+    else:
+        typer.echo("   Please install a Japanese/CJK font compatible with XeLaTeX", err=True)
+        typer.echo("   Recommended: Noto Sans CJK JP or Noto Serif CJK JP", err=True)
+
+    typer.echo("\n   After installation, run this command again.\n", err=True)
 
 
 def _section_sort_key(path: Path) -> tuple[int, str]:
@@ -48,7 +156,6 @@ def _render_pdf(
         )
 
     candidates: list[str | None] = cjk_fonts or [
-        None,
         "Hiragino Sans W3",  # macOS default Japanese font
         "Hiragino Mincho ProN",
         "Noto Sans CJK JP",
@@ -56,6 +163,7 @@ def _render_pdf(
         "Source Han Sans",
         "IPAMincho",
         "IPAGothic",
+        None,  # final fallback
     ]
 
     errors: list[str] = []
@@ -131,12 +239,27 @@ def guide(
         "--cjk-font",
         help="Font(s) to try for CJK text (can be passed multiple times). Defaults include Hiragino/Noto/IPA.",
     ),
+    skip_font_check: bool = typer.Option(
+        False,
+        "--skip-font-check",
+        help="Skip automatic CJK font checking and installation.",
+    ),
 ) -> None:
     """
     Build a PDF for a language guide by combining all markdown sections,
     rendering them to a PDF in <language>/outputs, then moving the PDF
     into the root-level outputs directory.
+
+    The CLI automatically checks for CJK fonts and offers to install them
+    on macOS if missing. Use --skip-font-check to bypass this check.
     """
+    # Check for CJK fonts if building a language that needs them
+    if not skip_font_check and language.name in ["japanese", "chinese", "korean"]:
+        try:
+            _ensure_cjk_fonts(auto_install=True)
+        except typer.Exit:
+            raise
+
     languages_dir = languages_dir.resolve()
     folder = _resolve_folder(language, languages_dir)
     language = folder.name
