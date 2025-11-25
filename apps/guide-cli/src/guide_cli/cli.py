@@ -14,6 +14,9 @@ from .discover import discover_languages, get_language_slugs, languages_to_json
 
 app = typer.Typer(help="Generate standardized tourist guide PDFs from a language folder.")
 
+# Languages that require CJK font support
+CJK_LANGUAGES = frozenset({"japanese", "chinese", "korean"})
+
 
 def _check_cjk_fonts_available() -> bool:
     """Check if any CJK fonts are available on the system."""
@@ -266,9 +269,12 @@ def guide(
 
     The CLI automatically checks for CJK fonts and offers to install them
     on macOS if missing. Use --skip-font-check to bypass this check.
+
+    Returns:
+        Path to the generated PDF file.
     """
     # Check for CJK fonts if building a language that needs them
-    if not skip_font_check and language.name in ["japanese", "chinese", "korean"]:
+    if not skip_font_check and language.name in CJK_LANGUAGES:
         try:
             _ensure_cjk_fonts(auto_install=True)
         except typer.Exit:
@@ -483,7 +489,7 @@ def _build_single_language(
     language_output_dir = folder / "outputs"
 
     # Check for CJK fonts if needed
-    if not skip_font_check and language_slug in ["japanese", "chinese", "korean"]:
+    if not skip_font_check and language_slug in CJK_LANGUAGES:
         _ensure_cjk_fonts(auto_install=False)
 
     section_files = _collect_sections(sections_dir, chapters_dir)

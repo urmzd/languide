@@ -10,6 +10,8 @@ jobs:
   discover:
     name: Discover Languages
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       languages: ${{ steps.discover.outputs.languages }}
       has_languages: ${{ steps.discover.outputs.has_languages }}
@@ -34,6 +36,8 @@ jobs:
     needs: discover
     if: needs.discover.outputs.has_languages == 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -156,6 +160,7 @@ jobs:
     needs: [discover, build, commit-outputs]
     if: always()
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Generate summary
         run: |
