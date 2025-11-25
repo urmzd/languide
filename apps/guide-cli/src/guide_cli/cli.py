@@ -163,6 +163,84 @@ def _combine_sections(section_files: Iterable[Path], combined_path: Path) -> Pat
     return combined_path
 
 
+def _get_template_path() -> Path:
+    """Get the path to the tourism-guide LaTeX template."""
+    # Template is located in the templates directory relative to guide-cli package
+    # cli.py is at: apps/guide-cli/src/guide_cli/cli.py
+    # template is at: apps/guide-cli/templates/tourism-guide.tex
+    cli_dir = Path(__file__).parent  # guide_cli/
+    guide_cli_src = cli_dir.parent  # src/
+    guide_cli_root = guide_cli_src.parent  # guide-cli/
+    template_path = guide_cli_root / "templates" / "tourism-guide.tex"
+    return template_path
+
+
+# CJK font candidates in order of preference
+CJK_FONT_CANDIDATES = [
+    "Noto Sans CJK JP",  # Best cross-platform option
+    "Noto Serif CJK JP",
+    "Hiragino Sans W3",  # macOS default Japanese font
+    "Hiragino Mincho ProN",
+    "Source Han Sans",
+    "IPAGothic",
+    "IPAMincho",
+]
+
+# Latin font candidates for body text (serif) - prefer DejaVu for reliability
+LATIN_SERIF_FONTS = [
+    "DejaVu Serif",
+    "Liberation Serif",
+    "Palatino Linotype",
+    "Palatino",
+]
+
+# Latin font candidates for headers (sans-serif) - prefer DejaVu for reliability
+LATIN_SANS_FONTS = [
+    "DejaVu Sans",
+    "Liberation Sans",
+    "Lato",
+]
+
+
+def _parse_font_families(fc_list_output: str) -> set[str]:
+    """Parse font family names from fc-list output."""
+    families: set[str] = set()
+    for line in fc_list_output.split("\n"):
+        for font in line.split(","):
+            font_name = font.strip()
+            if font_name:
+                families.add(font_name)
+    return families
+
+
+def _find_available_font(candidates: list[str]) -> str | None:
+    """Find the first available font from a list of candidates."""
+    if not shutil.which("fc-list"):
+        return None
+
+    try:
+        result = subprocess.run(
+            ["fc-list", "--format", "%{family}\n"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if result.returncode != 0:
+            return None
+
+        available_fonts = _parse_font_families(result.stdout)
+
+        for candidate in candidates:
+            # Check for exact match (case-insensitive)
+            for available in available_fonts:
+                if candidate.lower() == available.lower():
+                    return available
+
+        return None
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+
+
 def _render_pdf(
     md_path: Path, pdf_path: Path, title: str, pdf_engine: str, cjk_fonts: list[str] | None
 ) -> Path:
@@ -172,19 +250,17 @@ def _render_pdf(
             "and ensure LaTeX tooling like TeX Live is available."
         )
 
-    candidates: list[str | None] = cjk_fonts or [
-        "Hiragino Sans W3",  # macOS default Japanese font
-        "Hiragino Mincho ProN",
-        "Noto Sans CJK JP",
-        "Noto Serif CJK JP",
-        "Source Han Sans",
-        "IPAMincho",
-        "IPAGothic",
-        None,  # final fallback
-    ]
+    # Get template path
+    template_path = _get_template_path()
+    use_template = template_path.exists()
+
+    # Find available fonts
+    cjk_font_candidates: list[str | None] = cjk_fonts or CJK_FONT_CANDIDATES + [None]
+    main_font = _find_available_font(LATIN_SERIF_FONTS)
+    sans_font = _find_available_font(LATIN_SANS_FONTS)
 
     errors: list[str] = []
-    for font in candidates:
+    for cjk_font in cjk_font_candidates:
         cmd = [
             "pandoc",
             str(md_path),
@@ -199,25 +275,41 @@ def _render_pdf(
             "-V",
             f"title={title}",
             "-V",
-            "geometry:margin=1in",
+            "documentclass=article",
+            "-V",
+            "geometry:margin=0.75in",
             "-V",
             "colorlinks=true",
+            "-V",
+            "linkcolor=NavyBlue",
+            "-V",
+            "urlcolor=NavyBlue",
         ]
-        if font:
-            cmd.extend(["-V", f"mainfont={font}", "-V", f"CJKmainfont={font}"])
+
+        # Add custom template if available
+        if use_template:
+            cmd.extend(["--template", str(template_path)])
+
+        # Set fonts
+        if main_font:
+            cmd.extend(["-V", f"mainfont={main_font}"])
+        if sans_font:
+            cmd.extend(["-V", f"sansfont={sans_font}"])
+        if cjk_font:
+            cmd.extend(["-V", f"CJKmainfont={cjk_font}"])
 
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
             return pdf_path
 
         errors.append(
-            f"font={font or 'default'} code={result.returncode} "
+            f"font={cjk_font or 'default'} code={result.returncode} "
             f"stdout={result.stdout.strip() or 'n/a'} stderr={result.stderr.strip() or 'n/a'}"
         )
 
     raise RuntimeError(
         "pandoc failed while creating the PDF after trying fonts: "
-        f"{', '.join(str(f or 'default') for f in candidates)}. "
+        f"{', '.join(str(f or 'default') for f in cjk_font_candidates)}. "
         "Consider installing a CJK font (e.g., Noto Sans CJK JP) or set --cjk-font. "
         f"Details:\n" + "\n".join(errors)
     )
