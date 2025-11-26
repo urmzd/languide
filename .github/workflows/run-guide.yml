@@ -58,7 +58,16 @@ jobs:
       - name: Install system dependencies for PDF generation
         run: |
           sudo apt-get update
-          sudo apt-get install -y pandoc texlive-xetex texlive-fonts-recommended fonts-noto-cjk texlive-lang-cjk
+          sudo apt-get install -y \
+            pandoc \
+            texlive-xetex \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-lang-cjk \
+            texlive-lang-greek \
+            fonts-noto-cjk \
+            fonts-ipafont-gothic \
+            fonts-ipafont-mincho
 
       - name: Build guide for ${{ matrix.language.slug }}
         run: |
