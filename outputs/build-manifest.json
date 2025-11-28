@@ -1,12 +1,12 @@
 {
-  "build_time": "2025-11-27T02:36:40.091849+00:00",
-  "commit": "8ff138f4044a5d039581fd97273afb530c92a1a0",
+  "build_time": "2025-11-28T11:11:36.493322+00:00",
+  "commit": "6d10dac52ca9ef51fde3e404ddd3724e14ee0189",
   "ref": "refs/heads/main",
   "builds": [
     {
       "slug": "japanese",
       "file": "outputs/japanese-guide.pdf",
-      "size_bytes": 909662,
+      "size_bytes": 926507,
       "status": "success"
     }
   ]
