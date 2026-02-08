@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 (2026-02-08)
+
+### Features
+
+- use semantic-release built-in artifact upload instead of separate step ([1a44362](https://github.com/urmzd/languide/commit/1a443626ba44359cdedddf41cde91a0a99b8e3d2))
+
+### Contributors
+
+- @urmzd
+
+
 ## 0.3.0 (2026-02-08)
 
 ### Features
