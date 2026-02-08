@@ -1,61 +1,34 @@
-name: Build Language Guides
+name: Release & Build Guides
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  discover:
-    name: Discover Languages
+  release-and-build:
+    name: Release & Build
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    outputs:
-      languages: ${{ steps.discover.outputs.languages }}
-      has_languages: ${{ steps.discover.outputs.has_languages }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # semantic-release needs full history for tag analysis
 
-      - name: Discover languages
-        id: discover
-        run: |
-          languages=$(python scripts/discover-languages.py --output-format matrix)
-          echo "languages=$languages" >> $GITHUB_OUTPUT
-          if [ "$languages" = "[]" ]; then
-            echo "has_languages=false" >> $GITHUB_OUTPUT
-          else
-            echo "has_languages=true" >> $GITHUB_OUTPUT
-          fi
-          echo "Discovered languages: $languages"
+      - name: Semantic Release
+        id: sr
+        uses: urmzd/semantic-release@v0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  build:
-    name: Build ${{ matrix.language.slug }}
-    needs: discover
-    if: needs.discover.outputs.has_languages == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ${{ fromJson(needs.discover.outputs.languages) }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      # sr may have pushed a version bump commit; sync before building
+      - name: Pull latest changes
+        run: git pull --rebase origin main
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Set up Python
-        run: uv python install
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Install system dependencies for PDF generation
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -65,52 +38,10 @@ jobs:
             texlive-fonts-extra \
             texlive-lang-cjk \
             texlive-lang-greek \
+            texlive-lang-spanish \
             fonts-noto-cjk \
             fonts-ipafont-gothic \
             fonts-ipafont-mincho
-
-      - name: Build guide for ${{ matrix.language.slug }}
-        run: |
-          uv run guide-cli guide ${{ matrix.language.slug }} --skip-font-check
-          echo "Build completed for ${{ matrix.language.slug }}"
-
-      - name: Verify output exists
-        run: |
-          if [ ! -f "outputs/${{ matrix.language.slug }}-guide.pdf" ]; then
-            echo "Error: PDF output not found"
-            exit 1
-          fi
-          echo "PDF verified: outputs/${{ matrix.language.slug }}-guide.pdf"
-          ls -la outputs/
-
-      - name: Upload PDF artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.language.slug }}-guide
-          path: outputs/${{ matrix.language.slug }}-guide.pdf
-          retention-days: 30
-
-  commit-outputs:
-    name: Commit Built Guides
-    needs: [discover, build]
-    if: needs.discover.outputs.has_languages == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: outputs
-          merge-multiple: true
-
-      - name: List downloaded artifacts
-        run: |
-          echo "Downloaded artifacts:"
-          ls -la outputs/ || echo "No outputs directory"
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -119,38 +50,10 @@ jobs:
         run: uv python install
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --all-packages
 
-      - name: Generate build manifest
-        run: |
-          python -c "
-          import json
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          outputs_dir = Path('outputs')
-          pdfs = list(outputs_dir.glob('*.pdf')) if outputs_dir.exists() else []
-
-          manifest = {
-              'build_time': datetime.now(timezone.utc).isoformat(),
-              'commit': '${{ github.sha }}',
-              'ref': '${{ github.ref }}',
-              'builds': []
-          }
-
-          for pdf in pdfs:
-              slug = pdf.stem.replace('-guide', '')
-              manifest['builds'].append({
-                  'slug': slug,
-                  'file': str(pdf),
-                  'size_bytes': pdf.stat().st_size,
-                  'status': 'success'
-              })
-
-          outputs_dir.mkdir(exist_ok=True)
-          (outputs_dir / 'build-manifest.json').write_text(json.dumps(manifest, indent=2))
-          print(json.dumps(manifest, indent=2))
-          "
+      - name: Build all guides
+        run: uv run guide-cli build-all --skip-font-check --continue-on-error
 
       - name: Commit and push outputs
         run: |
@@ -164,27 +67,20 @@ jobs:
             git push
           fi
 
-  summary:
-    name: Build Summary
-    needs: [discover, build, commit-outputs]
-    if: always()
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Generate summary
+      - name: Build summary
+        if: always()
         run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Release & Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Discover | ${{ needs.discover.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Commit | ${{ needs.commit-outputs.result }} |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.sr.outputs.released }}" = "true" ]; then
+            echo "**Released:** v${{ steps.sr.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Released:** No release" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Languages Built" >> $GITHUB_STEP_SUMMARY
-          echo '${{ needs.discover.outputs.languages }}' | python -c "
-          import json, sys
-          langs = json.loads(sys.stdin.read())
-          for lang in langs:
-              print(f\"- **{lang['slug']}**: {lang['chapters']} chapters\")
-          " >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Unable to parse languages" >> $GITHUB_STEP_SUMMARY
+          if [ -f outputs/build-manifest.json ]; then
+            echo "### Build Manifest" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat outputs/build-manifest.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
