@@ -50,12 +50,7 @@ jobs:
         uses: urmzd/semantic-release@v0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload guides to release
-        if: steps.sr.outputs.released == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload "v${{ steps.sr.outputs.version }}" outputs/*.pdf --clobber
+          artifacts: "outputs/*.pdf"
 
       - name: Build summary
         if: always()
