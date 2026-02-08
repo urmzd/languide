@@ -10,7 +10,8 @@
 \usepackage{xunicode}
 \usepackage{xltxtra}
 
-% CJK Support - Critical for Japanese/Chinese/Korean
+% CJK Support - Only loaded for Japanese/Chinese/Korean
+$if(usecjk)$
 \usepackage{xeCJK}
 
 % Configure xeCJK to auto-fallback to CJK font for CJK characters
@@ -33,24 +34,19 @@ $else$
 \setCJKsansfont{Noto Sans CJK JP}[AutoFakeBold=2]
 \setCJKmonofont{Noto Sans CJK JP}
 $endif$
+$endif$
 
-% Set main fonts for Latin text
+% Set main fonts for Latin text (only override if explicitly provided)
 $if(mainfont)$
 \setmainfont{$mainfont$}
-$else$
-\setmainfont{DejaVu Serif}
 $endif$
 
 $if(sansfont)$
 \setsansfont{$sansfont$}
-$else$
-\setsansfont{DejaVu Sans}
 $endif$
 
 $if(monofont)$
 \setmonofont{$monofont$}
-$else$
-\setmonofont{DejaVu Sans Mono}
 $endif$
 
 % ============================================================================
@@ -111,6 +107,11 @@ $endif$
 
 % hyperref should be loaded last to avoid conflicts
 \usepackage{hyperref}
+
+% Fix for pandoc longtable caption suppression (requires a 'none' counter)
+\makeatletter
+\@ifundefined{c@none}{\newcounter{none}}{}
+\makeatother
 
 % Fix for older templates
 \newlength{\cslhangindent}

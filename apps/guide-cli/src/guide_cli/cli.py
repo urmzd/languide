@@ -242,7 +242,12 @@ def _find_available_font(candidates: list[str]) -> str | None:
 
 
 def _render_pdf(
-    md_path: Path, pdf_path: Path, title: str, pdf_engine: str, cjk_fonts: list[str] | None
+    md_path: Path,
+    pdf_path: Path,
+    title: str,
+    pdf_engine: str,
+    cjk_fonts: list[str] | None,
+    language_slug: str = "",
 ) -> Path:
     if shutil.which("pandoc") is None:
         raise RuntimeError(
@@ -254,8 +259,13 @@ def _render_pdf(
     template_path = _get_template_path()
     use_template = template_path.exists()
 
+    # Determine if this language needs CJK support
+    is_cjk = language_slug.lower() in CJK_LANGUAGES
+
     # Find available fonts
-    cjk_font_candidates: list[str | None] = cjk_fonts or CJK_FONT_CANDIDATES + [None]
+    cjk_font_candidates: list[str | None] = (
+        (cjk_fonts or CJK_FONT_CANDIDATES + [None]) if is_cjk else [None]
+    )
     main_font = _find_available_font(LATIN_SERIF_FONTS)
     sans_font = _find_available_font(LATIN_SANS_FONTS)
 
@@ -289,6 +299,10 @@ def _render_pdf(
         # Add custom template if available
         if use_template:
             cmd.extend(["--template", str(template_path)])
+
+        # Enable CJK support in template for CJK languages
+        if is_cjk:
+            cmd.extend(["-V", "usecjk=true"])
 
         # Set fonts
         if main_font:
@@ -404,6 +418,7 @@ def guide(
             title=f"{language.title()} Tourist Guide",
             pdf_engine=pdf_engine,
             cjk_fonts=cjk_font or None,
+            language_slug=language,
         )
     except RuntimeError as exc:
         typer.echo(str(exc), err=True)
@@ -598,6 +613,7 @@ def _build_single_language(
         title=f"{language_slug.title()} Tourist Guide",
         pdf_engine=pdf_engine,
         cjk_fonts=None,
+        language_slug=language_slug,
     )
 
     output_dir.mkdir(parents=True, exist_ok=True)
