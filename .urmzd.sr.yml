@@ -1,0 +1,11 @@
+branches:
+  - main
+
+tag_prefix: "v"
+
+version_files:
+  - pyproject.toml
+  - apps/guide-cli/pyproject.toml
+
+changelog:
+  file: CHANGELOG.md
