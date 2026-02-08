@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 (2026-02-08)
+
+### Features
+
+- build before release and attach PDFs as release artifacts ([d02855e](https://github.com/urmzd/languide/commit/d02855e145ef97cc9d1110587a1f7b6615eed64a))
+
+### Contributors
+
+- @urmzd
+
+
 ## 0.2.0 (2026-02-08)
 
 ### Features
