@@ -2,6 +2,8 @@
 
 **Languide** is a workspace for generating **communication-focused** language guides. Each language lives under `languages/<slug>` with numbered chapters, and PDFs are built via a Typer CLI (`guide-cli`) managed by `uv`.
 
+> **Note:** Every release automatically produces viewable PDF guides from the markdown source files. Check the [Releases](https://github.com/urmzd/languide/releases) page for the latest downloads.
+
 ## Philosophy
 
 These guides emphasize **practical communication**—phrases and patterns for everyday interactions—rather than tourism tips. Content is organized by **scenario** (greetings, restaurants, hotels, shopping, transport, emergencies) using **tables** for phrases and **pattern templates** with customizable slots.
