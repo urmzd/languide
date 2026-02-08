@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 (2026-02-08)
+
+### Features
+
+- add Spanish guide, fix CJK conditional loading, and clean up project ([4ba76ba](https://github.com/urmzd/languide/commit/4ba76ba2808f0c175248087c3be707e7f6cd7bbf))
+
+### Contributors
+
+- @urmzd
+
+
 ## 0.1.0 (2026-02-08)
 
 ### Features
