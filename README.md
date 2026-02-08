@@ -1,6 +1,6 @@
-# Language Communication Guides
+# Languide
 
-Workspace for generating **communication-focused** language guides. Each language lives under `languages/<slug>` with numbered chapters, and PDFs are built via a Typer CLI (`guide-cli`) managed by `uv`.
+**Languide** is a workspace for generating **communication-focused** language guides. Each language lives under `languages/<slug>` with numbered chapters, and PDFs are built via a Typer CLI (`guide-cli`) managed by `uv`.
 
 ## Philosophy
 
