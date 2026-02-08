@@ -1,11 +1,5 @@
-# Updated .gitignore
-
-# Ignore outputs directory
-# languages/*/outputs/**/*.pdf
-# outputs/**/*.pdf
-
-# Retain PDF files
-!*.pdf
+# Build outputs (attached to GitHub releases, not tracked in git)
+outputs/
 
 # Python
 __pycache__/
