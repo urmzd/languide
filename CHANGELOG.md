@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 (2026-02-11)
+
+### Features
+
+- add force re-release support to release workflow ([3ec4435](https://github.com/urmzd/languide/commit/3ec443503ea520a6a693b8fe743bfb9fef893ea8))
+
+### Documentation
+
+- add note about PDF artifacts in releases ([9acca7a](https://github.com/urmzd/languide/commit/9acca7aa0119a1f98d55dc906d6b3eb2b5b7bc7c))
+- rename project to Languide in README to match repo rename ([f665baf](https://github.com/urmzd/languide/commit/f665baf8bc2712fe2a656c094ebce92d423baa29))
+
+
 ## 0.4.0 (2026-02-08)
 
 ### Features
