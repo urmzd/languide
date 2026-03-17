@@ -1,29 +1,50 @@
-# Languide
+<p align="center">
+  <h1 align="center">Languide</h1>
+  <p align="center">
+    Communication-focused language guides built from markdown
+    <br /><br />
+    <a href="https://github.com/urmzd/languide/releases">Download</a>
+    &middot;
+    <a href="https://github.com/urmzd/languide/issues">Report Bug</a>
+    &middot;
+    <a href="https://github.com/urmzd/languide/releases">Releases</a>
+  </p>
+</p>
 
-Practical, communication-focused language guides for travelers — built from markdown, rendered to PDF.
+<p align="center">
+  <a href="https://github.com/urmzd/languide/actions/workflows/run-guide.yml"><img src="https://github.com/urmzd/languide/actions/workflows/run-guide.yml/badge.svg" alt="CI"></a>
+</p>
 
-> Every release automatically produces downloadable PDF guides. Check the [Releases](https://github.com/urmzd/languide/releases) page for the latest.
+## Features
 
-## Philosophy
+- **Scenario-based phrases** — greetings, restaurants, hotels, shopping, transport, emergencies
+- **Pattern templates** with `[bracket]` slots for customizable phrases
+- **Politeness tiers** — casual, polite, and very polite variants
+- **Tables** for all phrase collections (no inline lists)
+- **PDF generation** via Typer CLI with Pandoc + XeLaTeX
+- **Multi-language** workspace under `languages/<slug>/`
 
-These guides emphasize **practical communication** — phrases and patterns for everyday interactions — rather than tourism tips. Content is organized by scenario (restaurants, hotels, shopping, transport, emergencies) using tables for phrases and pattern templates with customizable slots.
-
-## Quick Start
-
-```bash
-uv sync                       # install dependencies
-uv run guide-cli japanese      # build a single guide
-uv run guide-cli build-all     # build all guides
-uv run guide-cli discover      # list available languages
-```
-
-### Prerequisites
+## Install
 
 - Python 3.10+ with [uv](https://docs.astral.sh/uv/)
 - [Pandoc](https://pandoc.org/) and a LaTeX engine (`xelatex` recommended)
 - CJK font for Japanese/Chinese/Korean (e.g., Noto Sans CJK)
 
-## Adding a New Language
+```bash
+uv sync
+```
+
+## Quick Start
+
+```bash
+uv run guide-cli japanese      # build a single guide
+uv run guide-cli build-all     # build all guides
+uv run guide-cli discover      # list available languages
+```
+
+## Usage
+
+### Adding a New Language
 
 The easiest way is with [Claude Code](https://github.com/anthropics/claude-code):
 
@@ -40,7 +61,33 @@ To add one manually:
 3. Verify against `agents/checklist.md`
 4. Run `uv run guide-cli <slug>` to produce `outputs/<slug>-guide.pdf`
 
-## Repository Layout
+### CLI Reference
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--languages-dir PATH` | Base directory for language folders | `languages/` |
+| `--output-dir`, `-o PATH` | Final output directory | `outputs/` |
+| `--pdf-name TEXT` | Custom PDF name (without extension) | `<slug>-guide` |
+| `--keep-md` | Retain combined markdown | off |
+| `--pdf-engine TEXT` | Pandoc PDF engine | `xelatex` |
+| `--cjk-font TEXT` | CJK font(s) to try (repeatable) | auto-detect |
+| `--skip-font-check` | Skip CJK font detection | off |
+
+### Fonts
+
+The CLI auto-detects CJK fonts and offers to install them on macOS. If glyphs are missing:
+
+```bash
+# macOS
+brew install --cask font-noto-sans-cjk font-noto-serif-cjk
+
+# or specify directly
+uv run guide-cli japanese --cjk-font "Noto Sans CJK JP"
+```
+
+## Configuration
+
+### Repository Layout
 
 ```
 languages/<slug>/chapters/   Numbered markdown chapters (00-cover.md … 10-cultural-guide.md)
@@ -51,7 +98,7 @@ apps/guide-cli/              Typer CLI for assembling chapters into PDFs
 outputs/                     Built PDFs (gitignored)
 ```
 
-## Chapter Structure
+### Chapter Structure
 
 Each guide contains 11 chapters:
 
@@ -91,18 +138,6 @@ Each guide contains 11 chapters:
 | Thank you | ありがとう | arigatou | Casual |
 | Thank you | ありがとうございます | arigatou gozaimasu | Polite |
 
-## CLI Reference
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--languages-dir PATH` | Base directory for language folders | `languages/` |
-| `--output-dir`, `-o PATH` | Final output directory | `outputs/` |
-| `--pdf-name TEXT` | Custom PDF name (without extension) | `<slug>-guide` |
-| `--keep-md` | Retain combined markdown | off |
-| `--pdf-engine TEXT` | Pandoc PDF engine | `xelatex` |
-| `--cjk-font TEXT` | CJK font(s) to try (repeatable) | auto-detect |
-| `--skip-font-check` | Skip CJK font detection | off |
-
 ## Agents & Skills
 
 | Resource | Purpose |
@@ -111,18 +146,6 @@ Each guide contains 11 chapters:
 | `agents/checklist.md` | Quality checklist for guide content |
 | `skills/create-language.md` | Claude Code skill that automates guide creation |
 | `AGENTS.md` | Agent conventions and project context |
-
-## Fonts
-
-The CLI auto-detects CJK fonts and offers to install them on macOS. If glyphs are missing:
-
-```bash
-# macOS
-brew install --cask font-noto-sans-cjk font-noto-serif-cjk
-
-# or specify directly
-uv run guide-cli japanese --cjk-font "Noto Sans CJK JP"
-```
 
 ## License
 
