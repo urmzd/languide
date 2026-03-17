@@ -1,6 +1,6 @@
 [project]
 name = "guide-cli"
-version = "0.5.0"
+version = "0.6.0"
 description = "Tourist guide PDF generator"
 readme = "README.md"
 authors = [
