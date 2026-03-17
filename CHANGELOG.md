@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.0 (2026-03-17)
+
+### Features
+
+- add AGENTS.md, create-language skill, and rewrite README ([bc55699](https://github.com/urmzd/languide/commit/bc55699712a647538a5f0cd3d4b90a00b95d0d64))
+
+### Miscellaneous
+
+- standardize GitHub Actions workflows ([dc6d0ce](https://github.com/urmzd/languide/commit/dc6d0ce1174fd6f3570917c937b73167607bcfa0))
+- add sensitive paths to .gitignore ([4ace631](https://github.com/urmzd/languide/commit/4ace631ce5aa2f3af391402fa72243b5b464d0a8))
+- update semantic-release action to v1 ([e26ba76](https://github.com/urmzd/languide/commit/e26ba7630084b8c4d36f82168337418c86e29525))
+- license under Apache 2.0 ([907e94c](https://github.com/urmzd/languide/commit/907e94c8a92930b3f6c7445e9c1a38b8e22184c7))
+
+[Full Changelog](https://github.com/urmzd/languide/compare/v0.5.0...v0.6.0)
+
+
 ## 0.5.0 (2026-02-11)
 
 ### Features
