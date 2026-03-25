@@ -52,7 +52,7 @@ jobs:
 
       - name: Semantic Release
         id: sr
-        uses: urmzd/semantic-release@v1
+        uses: urmzd/sr@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: "outputs/*.pdf"
