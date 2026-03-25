@@ -1,7 +1,6 @@
 ---
 name: create-language
-description: Generate a complete communication-focused language guide for travelers. Creates all 11 chapter files following the project's system prompt and checklist.
-user_invocable: true
+description: "Generate a complete communication-focused language guide for travelers. Creates all 11 chapter files following the project's system prompt and checklist."
 ---
 
 # Create Language Guide
