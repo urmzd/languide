@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.6.1 (2026-03-30)
+
+### Documentation
+
+- **skills**: migrate to agentskills.io spec structure ([36740de](https://github.com/urmzd/languide/commit/36740de439a1ce90f92f6598ca26f697281e0652))
+- apply README standards with centered header and structured sections ([aebc250](https://github.com/urmzd/languide/commit/aebc2509a1c902c8e5635273fc5a08ef8e72c63b))
+
+### Refactoring
+
+- replace Python CLI with shell scripts, unify build pipeline ([15bf85e](https://github.com/urmzd/languide/commit/15bf85ef3c10a5df3a0399e99e1a17d2ec5e68c4))
+- replace Python CLI with shell script ([0e27f2e](https://github.com/urmzd/languide/commit/0e27f2ed11f8cf56fe1c22d895afc5f73bf51602))
+- unify build pipeline and eliminate duplicated discovery logic ([bbcbfcb](https://github.com/urmzd/languide/commit/bbcbfcbd73c9652dd6dbe35dc38f701063dc0db0))
+
+### Miscellaneous
+
+- update sr action from v2 to v3 ([6913aa9](https://github.com/urmzd/languide/commit/6913aa9201613627f1517e8980f6a4b2d5cafbaa))
+- **scripts**: use pre-increment operators in build-guide.sh ([9aa9616](https://github.com/urmzd/languide/commit/9aa961669497817b4649dccff5484d32b61fe99d))
+- add git hooks for sr integration ([475d5cc](https://github.com/urmzd/languide/commit/475d5cc8f757d6eaea4fdbeede9bf22dcea58c13))
+- split into ci.yml and cd.yml, remove run-guide.yml ([2140e14](https://github.com/urmzd/languide/commit/2140e1456fd5af46db27b8cbeab4ccdefd0dad42))
+- standardize CI/CD — add sr.yaml, ci.yml, release workflow, justfile ([62601dd](https://github.com/urmzd/languide/commit/62601dde7a997cb3b74716ac1c11b1acd1d84b02))
+- update semantic-release action to sr@v2 ([6bf1b90](https://github.com/urmzd/languide/commit/6bf1b9049e023bf23800e03153adad44705cc52b))
+
+[Full Changelog](https://github.com/urmzd/languide/compare/v0.6.0...v0.6.1)
+
+
 ## 0.6.0 (2026-03-17)
 
 ### Features
