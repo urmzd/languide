@@ -227,12 +227,12 @@ for slug in "${LANGUAGES[@]}"; do
     final_line="$(echo "$pdf_path" | tail -1)"
     info "[$slug] Done: $final_line"
     manifest_builds="${manifest_builds}{\"slug\":\"$slug\",\"status\":\"success\",\"output_file\":\"$final_line\"},"
-    ((success++))
+    ((++success))
   else
     echo "$pdf_path" >&2
     info "[$slug] Failed" >&2
     manifest_builds="${manifest_builds}{\"slug\":\"$slug\",\"status\":\"failed\",\"error\":\"build failed\"},"
-    ((failure++))
+    ((++failure))
     $CONTINUE_ON_ERROR || exit 1
   fi
 done
