@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/urmzd/languide/actions/workflows/run-guide.yml"><img src="https://github.com/urmzd/languide/actions/workflows/run-guide.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/urmzd/languide/actions/workflows/cd.yml"><img src="https://github.com/urmzd/languide/actions/workflows/cd.yml/badge.svg" alt="CD"></a>
 </p>
 
 ## Features
@@ -21,25 +21,20 @@
 - **Pattern templates** with `[bracket]` slots for customizable phrases
 - **Politeness tiers** — casual, polite, and very polite variants
 - **Tables** for all phrase collections (no inline lists)
-- **PDF generation** via Typer CLI with Pandoc + XeLaTeX
+- **PDF generation** via a single shell script with Pandoc + XeLaTeX
 - **Multi-language** workspace under `languages/<slug>/`
 
-## Install
+## Prerequisites
 
-- Python 3.10+ with [uv](https://docs.astral.sh/uv/)
 - [Pandoc](https://pandoc.org/) and a LaTeX engine (`xelatex` recommended)
 - CJK font for Japanese/Chinese/Korean (e.g., Noto Sans CJK)
-
-```bash
-uv sync
-```
 
 ## Quick Start
 
 ```bash
-uv run guide-cli japanese      # build a single guide
-uv run guide-cli build-all     # build all guides
-uv run guide-cli discover      # list available languages
+./scripts/build-guide.sh                     # build all guides
+./scripts/build-guide.sh japanese            # build a single guide
+./scripts/build-guide.sh --discover          # list available languages
 ```
 
 ## Usage
@@ -59,42 +54,43 @@ To add one manually:
 1. Create `languages/<slug>/chapters/` with numbered chapters following the structure below
 2. Use `agents/system-prompt.md` as the generation prompt
 3. Verify against `agents/checklist.md`
-4. Run `uv run guide-cli <slug>` to produce `outputs/<slug>-guide.pdf`
+4. Run `./scripts/build-guide.sh <slug>` to produce `outputs/<slug>-guide.pdf`
 
 ### CLI Reference
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--languages-dir PATH` | Base directory for language folders | `languages/` |
-| `--output-dir`, `-o PATH` | Final output directory | `outputs/` |
-| `--pdf-name TEXT` | Custom PDF name (without extension) | `<slug>-guide` |
-| `--keep-md` | Retain combined markdown | off |
-| `--pdf-engine TEXT` | Pandoc PDF engine | `xelatex` |
-| `--cjk-font TEXT` | CJK font(s) to try (repeatable) | auto-detect |
-| `--skip-font-check` | Skip CJK font detection | off |
+```
+./scripts/build-guide.sh [options] [LANGUAGE...]
+
+Options:
+  --languages-dir DIR   Directory containing language folders (default: languages)
+  --output-dir DIR      Output directory for PDFs (default: outputs)
+  --skip-font-check     Skip CJK font detection
+  --continue-on-error   Keep going if a language fails
+  --manifest FILE       Write build manifest JSON to FILE
+  --discover            List available languages and exit
+```
 
 ### Fonts
 
-The CLI auto-detects CJK fonts and offers to install them on macOS. If glyphs are missing:
+CJK languages (Japanese, Chinese, Korean) require CJK fonts. If glyphs are missing:
 
 ```bash
 # macOS
 brew install --cask font-noto-sans-cjk font-noto-serif-cjk
 
-# or specify directly
-uv run guide-cli japanese --cjk-font "Noto Sans CJK JP"
+# Debian/Ubuntu
+sudo apt-get install fonts-noto-cjk
 ```
 
-## Configuration
-
-### Repository Layout
+## Repository Layout
 
 ```
 languages/<slug>/chapters/   Numbered markdown chapters (00-cover.md … 10-cultural-guide.md)
 languages/<slug>/spec.md     Content specification for that language
 agents/                      System prompt and quality checklist
 skills/                      Claude Code skills for automating guide creation
-apps/guide-cli/              Typer CLI for assembling chapters into PDFs
+scripts/build-guide.sh       Shell script for assembling chapters into PDFs
+templates/                   LaTeX template for PDF styling
 outputs/                     Built PDFs (gitignored)
 ```
 
@@ -124,27 +120,13 @@ Each guide contains 11 chapters:
 - **50+ phrases** per scenario chapter, **30+** for directions and emergencies
 - **No tourism tips** — focus on how to communicate, not what to see
 
-### Example: Pattern Phrases
-
-| Pattern | Japanese | Example |
-|---------|----------|---------|
-| [thing] please | [もの]をください | 水をください = Water please |
-| Where is [place]? | [場所]はどこですか | 駅はどこですか = Where is the station? |
-
-### Example: Politeness Tiers
-
-| English | Japanese | Romaji | Politeness |
-|---------|----------|--------|------------|
-| Thank you | ありがとう | arigatou | Casual |
-| Thank you | ありがとうございます | arigatou gozaimasu | Polite |
-
 ## Agents & Skills
 
 | Resource | Purpose |
 |----------|---------|
 | `agents/system-prompt.md` | Prompt for generating new language guides |
 | `agents/checklist.md` | Quality checklist for guide content |
-| `skills/create-language.md` | Claude Code skill that automates guide creation |
+| `skills/create-language/SKILL.md` | Claude Code skill that automates guide creation |
 | `AGENTS.md` | Agent conventions and project context |
 
 ## License

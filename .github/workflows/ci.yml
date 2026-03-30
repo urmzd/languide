@@ -18,35 +18,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: shellcheck scripts/*.sh
 
-      - uses: astral-sh/setup-uv@v5
-
-      - name: Set up Python
-        run: uv python install
-
-      - name: Install dependencies
-        run: uv sync --group dev
-
-      - name: Check formatting
-        run: uv run ruff format --check .
-
-      - name: Run linter
-        run: uv run ruff check .
-
-  test:
-    name: Test
+  build:
+    name: Build
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v5
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pandoc \
+            texlive-xetex \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-lang-cjk \
+            texlive-lang-greek \
+            texlive-lang-spanish \
+            fonts-noto-cjk \
+            fonts-ipafont-gothic \
+            fonts-ipafont-mincho
 
-      - name: Set up Python
-        run: uv python install
-
-      - name: Install dependencies
-        run: uv sync --group dev
-
-      - name: Run tests
-        run: uv run pytest || echo "No tests found, skipping"
-        continue-on-error: true
+      - name: Build all guides
+        run: ./scripts/build-guide.sh --skip-font-check --continue-on-error
