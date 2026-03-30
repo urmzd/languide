@@ -2,9 +2,9 @@
 """
 Helper script for discovering languages in GitHub Actions workflows.
 
-This script provides a standalone way to discover languages without
-requiring the full guide-cli installation. It outputs JSON that can
-be consumed by GitHub Actions matrix strategies.
+Delegates to guide_cli.discover so that discovery logic has a single
+authoritative implementation. Requires the guide-cli package to be
+installed (e.g. ``uv sync``).
 
 Usage:
     python scripts/discover-languages.py [--languages-dir LANGUAGES_DIR]
@@ -13,36 +13,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
-
-def discover_languages(languages_dir: Path) -> list[dict]:
-    """Discover all languages with chapters/ subdirectories."""
-    languages = []
-
-    if not languages_dir.is_dir():
-        return languages
-
-    for item in sorted(languages_dir.iterdir()):
-        if not item.is_dir() or item.name.startswith("."):
-            continue
-
-        chapters_dir = item / "chapters"
-        if not chapters_dir.is_dir():
-            continue
-
-        chapter_files = list(chapters_dir.glob("*.md"))
-        if not chapter_files:
-            continue
-
-        languages.append({
-            "slug": item.name,
-            "chapters": len(chapter_files),
-        })
-
-    return languages
+from guide_cli.discover import discover_languages, get_language_slugs, languages_to_json
 
 
 def main() -> int:
@@ -70,13 +44,12 @@ def main() -> int:
         return 0
 
     if args.output_format == "json":
-        print(json.dumps(languages, indent=2))
+        print(languages_to_json(languages))
     elif args.output_format == "matrix":
-        # Output format suitable for GitHub Actions matrix
-        print(json.dumps(languages, separators=(",", ":")))
+        print(languages_to_json(languages, compact=True))
     else:  # slugs
-        for lang in languages:
-            print(lang["slug"])
+        for slug in get_language_slugs(languages):
+            print(slug)
 
     return 0
 
