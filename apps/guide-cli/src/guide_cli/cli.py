@@ -375,69 +375,28 @@ def guide(
 
     The CLI automatically checks for CJK fonts and offers to install them
     on macOS if missing. Use --skip-font-check to bypass this check.
-
-    Returns:
-        Path to the generated PDF file.
     """
-    # Check for CJK fonts if building a language that needs them
-    if not skip_font_check and language.name in CJK_LANGUAGES:
-        try:
-            _ensure_cjk_fonts(auto_install=True)
-        except typer.Exit:
-            raise
-
     languages_dir = languages_dir.resolve()
     folder = _resolve_folder(language, languages_dir)
-    language = folder.name
-    sections_dir = folder / "sections"
-    chapters_dir = folder / "chapters"
-    language_output_dir = folder / "outputs"
+    slug = folder.name
 
     try:
-        section_files = _collect_sections(sections_dir, chapters_dir)
-    except typer.BadParameter as exc:
+        final_pdf = _build_single_language(
+            language_slug=slug,
+            languages_dir=languages_dir,
+            output_dir=output_dir.resolve(),
+            skip_font_check=skip_font_check,
+            pdf_engine=pdf_engine,
+            cjk_fonts=cjk_font or None,
+            pdf_name=pdf_name,
+            keep_combined_markdown=keep_combined_markdown,
+            auto_install_fonts=True,
+        )
+    except (typer.BadParameter, RuntimeError) as exc:
         typer.echo(f"[error] {exc}", err=True)
         raise typer.Exit(code=1)
 
-    pdf_basename = f"{language}-guide" if pdf_name is None else pdf_name
-    combined_md = language_output_dir / f"{pdf_basename}.md"
-    pdf_path = language_output_dir / f"{pdf_basename}.pdf"
-
-    using_chapters = chapters_dir.exists() and any(chapters_dir in f.parents for f in section_files)
-    if using_chapters:
-        typer.echo(f"Combining {len(section_files)} chapter files from {chapters_dir}...")
-    else:
-        typer.echo(f"Combining {len(section_files)} section files from {sections_dir}...")
-    _combine_sections(section_files, combined_md)
-
-    try:
-        typer.echo("Rendering PDF with pandoc...")
-        _render_pdf(
-            combined_md,
-            pdf_path,
-            title=f"{language.title()} Tourist Guide",
-            pdf_engine=pdf_engine,
-            cjk_fonts=cjk_font or None,
-            language_slug=language,
-        )
-    except RuntimeError as exc:
-        typer.echo(str(exc), err=True)
-        raise typer.Exit(code=1)
-
-    output_dir = output_dir.resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
-    final_pdf = output_dir / pdf_path.name
-    if final_pdf.exists():
-        final_pdf.unlink()
-    shutil.move(str(pdf_path), final_pdf)
-
-    if keep_combined_markdown:
-        typer.echo(f"Combined markdown retained at {combined_md}")
-    else:
-        combined_md.unlink(missing_ok=True)
-
     typer.echo(f"Guide ready: {final_pdf}")
-    return final_pdf
 
 
 @app.command()
@@ -552,6 +511,7 @@ def build_all(
                 output_dir=output_dir,
                 skip_font_check=skip_font_check,
                 pdf_engine=pdf_engine,
+                auto_install_fonts=False,
             )
             build_entry["status"] = "success"
             build_entry["output_file"] = str(pdf_path)
@@ -583,10 +543,18 @@ def _build_single_language(
     language_slug: str,
     languages_dir: Path,
     output_dir: Path,
-    skip_font_check: bool,
-    pdf_engine: str,
+    skip_font_check: bool = False,
+    pdf_engine: str = "xelatex",
+    cjk_fonts: list[str] | None = None,
+    pdf_name: str | None = None,
+    keep_combined_markdown: bool = False,
+    auto_install_fonts: bool = False,
 ) -> Path:
-    """Build a single language guide and return the output path."""
+    """Build a single language guide and return the output path.
+
+    This is the single authoritative build pipeline used by both the
+    ``guide`` command (single language) and ``build-all`` (batch).
+    """
     folder = languages_dir / language_slug
     if not folder.is_dir():
         raise ValueError(f"Language folder not found: {folder}")
@@ -597,22 +565,27 @@ def _build_single_language(
 
     # Check for CJK fonts if needed
     if not skip_font_check and language_slug in CJK_LANGUAGES:
-        _ensure_cjk_fonts(auto_install=False)
+        _ensure_cjk_fonts(auto_install=auto_install_fonts)
 
     section_files = _collect_sections(sections_dir, chapters_dir)
 
-    pdf_basename = f"{language_slug}-guide"
+    pdf_basename = pdf_name or f"{language_slug}-guide"
     combined_md = language_output_dir / f"{pdf_basename}.md"
     pdf_path = language_output_dir / f"{pdf_basename}.pdf"
 
+    using_chapters = chapters_dir.exists() and any(chapters_dir in f.parents for f in section_files)
+    source_dir = chapters_dir if using_chapters else sections_dir
+    typer.echo(f"Combining {len(section_files)} {'chapter' if using_chapters else 'section'} files from {source_dir}...")
+
     _combine_sections(section_files, combined_md)
 
+    typer.echo("Rendering PDF with pandoc...")
     _render_pdf(
         combined_md,
         pdf_path,
         title=f"{language_slug.title()} Tourist Guide",
         pdf_engine=pdf_engine,
-        cjk_fonts=None,
+        cjk_fonts=cjk_fonts,
         language_slug=language_slug,
     )
 
@@ -622,8 +595,10 @@ def _build_single_language(
         final_pdf.unlink()
     shutil.move(str(pdf_path), final_pdf)
 
-    # Clean up combined markdown
-    combined_md.unlink(missing_ok=True)
+    if keep_combined_markdown:
+        typer.echo(f"Combined markdown retained at {combined_md}")
+    else:
+        combined_md.unlink(missing_ok=True)
 
     return final_pdf
 
