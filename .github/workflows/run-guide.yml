@@ -38,17 +38,8 @@ jobs:
             fonts-ipafont-gothic \
             fonts-ipafont-mincho
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Set up Python
-        run: uv python install
-
-      - name: Install dependencies
-        run: uv sync --all-packages
-
       - name: Build all guides
-        run: uv run guide-cli build-all --skip-font-check --continue-on-error
+        run: ./scripts/build-guide.sh --skip-font-check --continue-on-error
 
       - name: Semantic Release
         id: sr

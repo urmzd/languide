@@ -62,4 +62,4 @@ After generating all chapters, report:
 - Number of chapters created
 - Approximate phrase count per chapter
 - Any checklist items that need attention
-- Remind the user they can build the PDF with: `uv run guide-cli <slug>`
+- Remind the user they can build the PDF with: `./scripts/build-guide.sh <slug>`

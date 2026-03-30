@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Languide** generates communication-focused language guides for travelers. Each language lives under `languages/<slug>/chapters/` as numbered markdown files, which get combined and rendered to PDF via `guide-cli`.
+**Languide** generates communication-focused language guides for travelers. Each language lives under `languages/<slug>/chapters/` as numbered markdown files, which get combined and rendered to PDF via `scripts/build-guide.sh`.
 
 The focus is **practical phrases for everyday interactions** — not tourism tips. Content is organized by scenario (restaurants, hotels, shopping, transport, emergencies) using tables and pattern templates.
 
@@ -13,7 +13,8 @@ languages/<slug>/chapters/   — numbered markdown chapters (00-cover.md … 10-
 languages/<slug>/spec.md     — detailed content specification for that language
 agents/system-prompt.md      — prompt for generating new language guides
 agents/checklist.md          — quality checklist for guide content
-apps/guide-cli/              — Typer CLI for assembling chapters into PDFs
+scripts/build-guide.sh       — shell script for assembling chapters into PDFs
+templates/tourism-guide.tex  — LaTeX template for PDF styling
 outputs/                     — built PDFs (gitignored)
 skills/                      — Claude Code skills for automating guide creation
 ```
@@ -42,18 +43,17 @@ To manually add a language:
 1. Create `languages/<slug>/chapters/` with all 11 chapter files following `agents/system-prompt.md`
 2. Optionally create `languages/<slug>/spec.md` with detailed content spec
 3. Validate against `agents/checklist.md`
-4. Build with `uv run guide-cli <slug>`
+4. Build with `./scripts/build-guide.sh <slug>`
 
 ## Building
 
 ```bash
-uv sync                        # install deps
-uv run guide-cli <slug>        # build one language
-uv run guide-cli build-all     # build all languages
-uv run guide-cli discover      # list available languages
+./scripts/build-guide.sh                  # build all languages
+./scripts/build-guide.sh <slug>           # build one language
+./scripts/build-guide.sh --discover       # list available languages
 ```
 
-CJK languages (japanese, chinese, korean) require CJK fonts — the CLI auto-detects and offers to install on macOS.
+CJK languages (japanese, chinese, korean) require CJK fonts — use `--skip-font-check` in CI.
 
 ## Skills
 
@@ -64,9 +64,3 @@ Generates a complete communication-focused language guide. Creates all 11 chapte
 ## CI/CD
 
 On push to `main`, GitHub Actions builds all guides and creates a semantic release with PDF artifacts attached.
-
-## Code Style
-
-- Python 3.10+, managed by `uv`
-- Typer for CLI
-- Pandoc + XeLaTeX for PDF rendering
