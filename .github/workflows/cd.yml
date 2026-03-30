@@ -1,4 +1,4 @@
-name: Release
+name: CD
 
 on:
   push:
@@ -14,6 +14,9 @@ concurrency:
   group: release
   cancel-in-progress: false
 
+permissions:
+  contents: write
+
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
@@ -22,8 +25,6 @@ jobs:
     name: Release
     needs: ci
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - name: Generate app token
         id: app-token
@@ -38,12 +39,27 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
-      - uses: urmzd/sr@v2
-        id: sr
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            pandoc \
+            texlive-xetex \
+            texlive-fonts-recommended \
+            texlive-fonts-extra \
+            texlive-lang-cjk \
+            texlive-lang-greek \
+            texlive-lang-spanish \
+            fonts-noto-cjk \
+            fonts-ipafont-gothic \
+            fonts-ipafont-mincho
+
+      - name: Build all guides
+        run: ./scripts/build-guide.sh --skip-font-check --continue-on-error
+
+      - name: Semantic Release
+        uses: urmzd/sr@v2
         with:
           github-token: ${{ steps.app-token.outputs.token }}
+          artifacts: "outputs/*.pdf"
           force: ${{ inputs.force || false }}
-
-    outputs:
-      released: ${{ steps.sr.outputs.released }}
-      tag: ${{ steps.sr.outputs.tag }}

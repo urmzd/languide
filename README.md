@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/urmzd/languide/actions/workflows/run-guide.yml"><img src="https://github.com/urmzd/languide/actions/workflows/run-guide.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/urmzd/languide/actions/workflows/cd.yml"><img src="https://github.com/urmzd/languide/actions/workflows/cd.yml/badge.svg" alt="CD"></a>
 </p>
 
 ## Features
