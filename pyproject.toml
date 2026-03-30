@@ -1,8 +1,0 @@
-[project]
-name = "languide"
-version = "0.6.0"
-description = "Communication-focused language guide PDF generator"
-requires-python = ">=3.10"
-
-[tool.uv.workspace]
-members = ["apps/*"]
