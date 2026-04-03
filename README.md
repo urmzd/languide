@@ -15,6 +15,21 @@
   <a href="https://github.com/urmzd/languide/actions/workflows/cd.yml"><img src="https://github.com/urmzd/languide/actions/workflows/cd.yml/badge.svg" alt="CD"></a>
 </p>
 
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="showcase/japanese-phrases.png" alt="Japanese pattern phrases" width="420" />
+      <br />
+      <sub><b>Japanese</b> — pattern phrases with romaji</sub>
+    </td>
+    <td align="center">
+      <img src="showcase/spanish-phrases.png" alt="Spanish pattern templates" width="420" />
+      <br />
+      <sub><b>Spanish</b> — reusable phrase templates</sub>
+    </td>
+  </tr>
+</table>
+
 ## Features
 
 - **Scenario-based phrases** — greetings, restaurants, hotels, shopping, transport, emergencies
