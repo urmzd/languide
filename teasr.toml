@@ -1,0 +1,49 @@
+[output]
+dir = "./showcase"
+
+[[output.formats]]
+output_type = "png"
+
+[[output.formats]]
+output_type = "gif"
+
+[font]
+family = "Iosevka Nerd Font Mono"
+
+[[scenes]]
+type = "terminal"
+name = "languide-demo"
+theme = "dracula"
+cols = 100
+rows = 35
+
+[scenes.intro]
+text = "languide\nPractical language guides for travelers"
+duration = 2000
+center = true
+
+[[scenes.interactions]]
+type = "type"
+text = "./scripts/build-guide.sh --discover"
+speed = 40
+
+[[scenes.interactions]]
+type = "key"
+key = "enter"
+
+[[scenes.interactions]]
+type = "wait"
+duration = 2000
+
+[[scenes.interactions]]
+type = "type"
+text = "./scripts/build-guide.sh japanese"
+speed = 40
+
+[[scenes.interactions]]
+type = "key"
+key = "enter"
+
+[[scenes.interactions]]
+type = "wait"
+duration = 10000
