@@ -69,7 +69,7 @@ find_font() {
   local available
   available="$(fc-list --format '%{family}\n' 2>/dev/null)" || return 1
   for candidate in "${candidates[@]}"; do
-    if echo "$available" | grep -qi "^${candidate}$"; then
+    if [[ "$(echo "$available" | grep -ciF "$candidate")" -gt 0 ]]; then
       echo "$candidate"
       return 0
     fi
@@ -159,8 +159,13 @@ build_language() {
   # CJK support
   if is_cjk "$slug"; then
     cmd+=(-V usecjk=true)
-    local cjk_font
-    cjk_font="$(find_font CJK_FONT_CANDIDATES)" && cmd+=(-V "CJKmainfont=$cjk_font")
+    local cjk_font=""
+    for _f in "${CJK_FONT_CANDIDATES[@]}"; do
+      if [[ "$(fc-list --format '%{family}\n' 2>/dev/null | grep -ciF "$_f")" -gt 0 ]]; then
+        cjk_font="$_f"; break
+      fi
+    done
+    [[ -n "$cjk_font" ]] && cmd+=(-V "CJKmainfont=$cjk_font")
   fi
 
   # Latin fonts
