@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 (2026-04-04)
+
+### Features
+
+- add teasr demo config (#11) ([03994cb](https://github.com/urmzd/languide/commit/03994cb23f1e2379cbe162b16b8e66c9fba19dad))
+
+[Full Changelog](https://github.com/urmzd/languide/compare/v0.6.1...v0.7.0)
+
+
 ## 0.6.1 (2026-03-30)
 
 ### Documentation
