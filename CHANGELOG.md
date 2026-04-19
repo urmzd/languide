@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.1 (2026-04-19)
+
+### Bug Fixes
+
+- **ci**: drop removed sr action force input ([ce1ad4d](https://github.com/urmzd/languide/commit/ce1ad4d3ffa64e20be2faa37405f233a11ea9fdf))
+
+### Misc
+
+- migrate sr config and action to v7 ([a127571](https://github.com/urmzd/languide/commit/a127571c4e9af551cfcdfd2ec197e8f4373c9e1f))
+- migrate sr config and action to v4 ([25370ea](https://github.com/urmzd/languide/commit/25370ea1590d68f56b03e7f4c5f66159dc0fad76))
+- add linguist overrides to fix language stats ([c711b2b](https://github.com/urmzd/languide/commit/c711b2bf157b1855aa8842ad95fc74168420fe61))
+- **deps**: bump actions/create-github-app-token from 1 to 3 ([346bd2f](https://github.com/urmzd/languide/commit/346bd2fdf7e5d296bc58529863fb09c8d902f61f))
+
+[Full Changelog](https://github.com/urmzd/languide/compare/v0.7.0...v0.7.1)
+
+
 ## 0.7.0 (2026-04-04)
 
 ### Features
