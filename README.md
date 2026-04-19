@@ -12,7 +12,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/urmzd/languide/actions/workflows/cd.yml"><img src="https://github.com/urmzd/languide/actions/workflows/cd.yml/badge.svg" alt="CD"></a>
+  <a href="https://github.com/urmzd/languide/actions/workflows/cd.yml"><img src="https://github.com/urmzd/languide/actions/workflows/cd.yml/badge.svg" alt="CI"></a>
+  &nbsp;
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/urmzd/languide" alt="License"></a>
 </p>
 
 <table align="center">
@@ -135,7 +137,9 @@ Each guide contains 11 chapters:
 - **50+ phrases** per scenario chapter, **30+** for directions and emergencies
 - **No tourism tips** — focus on how to communicate, not what to see
 
-## Agents & Skills
+## Agent Skill
+
+This repo's conventions are available as portable agent skills in [`skills/`](skills/).
 
 | Resource | Purpose |
 |----------|---------|
@@ -146,4 +150,4 @@ Each guide contains 11 chapters:
 
 ## License
 
-[Apache 2.0](LICENSE)
+[Apache-2.0](LICENSE)
