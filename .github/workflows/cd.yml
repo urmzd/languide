@@ -52,7 +52,7 @@ jobs:
       - name: Build all guides
         run: ./scripts/build-guide.sh --skip-font-check --continue-on-error
 
-      - uses: urmzd/sr@v7
+      - uses: urmzd/sr@v8
         id: sr
         with:
           github-token: ${{ steps.app-token.outputs.token }}

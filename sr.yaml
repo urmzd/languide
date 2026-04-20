@@ -1,4 +1,4 @@
-# sr v7 configuration
+# sr configuration
 # Reference: https://github.com/urmzd/sr#configuration
 
 git:
@@ -61,4 +61,5 @@ channels:
 packages:
   - path: .
     artifacts:
-      - "outputs/*.pdf"
+      - outputs/japanese-guide.pdf
+      - outputs/spanish-guide.pdf
