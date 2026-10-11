@@ -1,3 +1,10 @@
+> [!IMPORTANT]
+> **This repository is archived. Development moved to [urmzd/openlearn](https://github.com/urmzd/openlearn), under [`packs/languide/`](https://github.com/urmzd/openlearn/tree/main/packs/languide/).**
+>
+> The guides are now a **course pack** for openlearn, a desktop learning platform: the chapters are read in the app, each language has a path with progress, and a written session graded against a chapter replaces reading alone. Keeping the guides beside the platform that renders them is what lets them be verified and not only published.
+>
+> The full history of this repository was merged into openlearn, so nothing was lost: `git log -- packs/languide/` there continues from the last commit here. Open issues and pull requests against the language guides belong in [openlearn](https://github.com/urmzd/openlearn/issues). The code below is kept as it was at the move.
+
 <p align="center">
   <h1 align="center">Languide</h1>
   <p align="center">
